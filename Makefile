@@ -1,8 +1,8 @@
 APP=$(shell basename $(shell git remote get-url origin))
 REGISTRY=vadimmns
 VERSION=$(shell git describe --tags --abbrev=0)-$(shell git rev-parse --short HEAD)
-TARGETOS=linux
-TARGETARCH=arm64
+TARGETOS=$(word 2,$(MAKECMDGOALS)) # 1st argument from command line 
+TARGETARCH=$(word 3,$(MAKECMDGOALS)) # 2nd argument from command line
 
 format:
 	gofmt -s -w ./
@@ -16,7 +16,10 @@ test:
 get:
 	go get	
 
-build: format get
+# for building kbot use make build <arg1> <arg2>, where arg1 - OS type (linux, windows, darwin )
+# and arg2 - type of architecture (amd64, arm64)
+
+build: format get 
 	CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -v -o kbot -ldflags "-X="github.com/sdrvadim/kbot/cmd.appVersion=${VERSION}
 
 image:
@@ -24,8 +27,6 @@ image:
 
 push:
 	docker push ${REGISTRY}/${APP}:${VERSION}-${TARGETARCH}
-
-clean:
 
 clean:
 	rm -rf kbot
